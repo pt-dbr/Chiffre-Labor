@@ -174,3 +174,15 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 
 
 .hill-matrix { border-inline:2px solid var(--ink); border-collapse:separate; border-spacing:.75rem .15rem; margin:.35rem 0; text-align:center; font-weight:750; }
+
+#hill-lesson { padding:.15rem 0 .65rem; }
+#hill-lesson h4 { margin:.85rem 0 .3rem; font-size:1rem; }
+.hill-alphabet { display:grid; grid-template-columns:repeat(auto-fit,minmax(1.9rem,1fr)); gap:.2rem; }
+.hill-alphabet span { display:grid; text-align:center; background:#eaf2f5; border-radius:.3rem; padding:.2rem; }
+.hill-alphabet .hill-mark { background:#14546b; color:white; }
+.hill-worked { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(13rem,100%),1fr)); gap:.6rem; }
+.hill-pair { background:#f7fafb; border:1px solid #a5b8c2; border-radius:.55rem; padding:.55rem .75rem; }
+.hill-pair h4 { margin:0 0 .25rem; color:#14546b; }
+.hill-pair ol { margin:0; padding-left:1.45rem; }
+.hill-pair li + li { margin-top:.35rem; }
+.hill-total { color:#14546b; font-size:1.3rem; margin-top:.65rem; }

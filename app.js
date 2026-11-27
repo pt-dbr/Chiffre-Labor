@@ -14,7 +14,7 @@ const modes = {
   vigenere: ['Vigenère', 'Jeder Buchstabe deines Schlüsselworts bestimmt eine Verschiebung.', 'Ab Klasse 8', 'A bedeutet Verschiebung 0, B bedeutet 1, Z bedeutet 25. Das Schlüsselwort wiederholt sich. Leer- und Satzzeichen verbrauchen keinen Schlüsselbuchstaben.', 'Verschlüssle AAAAAA einmal mit ABC und einmal mit AAA. Was siehst du?'],
   columnar: ['Spaltentransposition', 'Schreib in Zeilen und lies die Spalten nach dem Schlüsselwort ab.', 'Ab Klasse 8', 'Schreibe die Nachricht zeilenweise unter das Codewort. Sortiere die Spalten nach den Schlüsselbuchstaben. Bei gleichen Buchstaben kommt die linke Spalte zuerst. Lies jede Spalte von oben nach unten. Leer- und Satzzeichen wandern mit.', 'Vergleiche die Codewörter ZEBRA und ZEBRAS. Warum ändert sich die Reihenfolge des Geheimtexts?'],
   affine: ['Affine Chiffre', 'Multipliziere und verschiebe im Alphabet.', 'Ab Klasse 9', 'Nummeriere A bis Z von 0 bis 25. Für die Zahl x berechnest du a × x + b und nimmst den Rest bei Division durch 26. Faktor a muss zu 26 teilerfremd sein, damit alle Buchstaben eindeutig bleiben.', 'Stelle a = 1 ein und vergleiche die Zuordnung mit Cäsar. Was bewirkt a = 5?'],
-  hill: ['Hill-Chiffre', 'Verschlüssele Buchstabenpaare mit einer Matrix.', 'Ab Klasse 10', 'A zählt als 0, Z als 25. Multipliziere die beiden Zahlen eines Paars mit der Schlüsselmatrix und nimm jeweils den Rest bei Division durch 26. Zum Entschlüsseln wird die Umkehrmatrix verwendet. Leerzeichen und Satzzeichen entfallen. Bei ungerader Länge ergänzt die App ein X. Prüfe nach dem Entschlüsseln, ob das letzte X ein Füllzeichen war.', 'Vergleiche HA und HB. Wie viele Zeichen im Ergebnis ändern sich? Wechsle danach die Schlüsselmatrix.'],
+  hill: ['Hill-Chiffre', 'Verschlüssele Buchstabenpaare mit einer Matrix.', 'Ab Klasse 10', 'Bei Hill werden immer zwei Buchstaben gemeinsam verschlüsselt. Die Schlüsselmatrix ist eine kleine Zahlentabelle. Ihre beiden Zeilen sagen dir, wie du die zwei neuen Buchstaben berechnest.', 'Vergleiche HA und HB. Wie viele Zeichen im Ergebnis ändern sich? Wechsle danach die Schlüsselmatrix.'],
   crack: ['Knack-Labor', 'Probiere alle Cäsar-Schlüssel und finde die lesbare Nachricht.', 'Ab Klasse 7', 'Bei Cäsar gibt es 26 Möglichkeiten einschließlich 0. Die Buchstabenhäufigkeit zeigt, welche Zeichen oft vorkommen. Bei kurzen Texten ist sie nur ein schwacher Hinweis.', 'Setze das Beispiel ein und finde einen lesbaren Satz. Zähle, wie viele Verschiebungen du ausprobiert hast.']
 };
 const drafts = Object.fromEntries(Object.keys(modes).map(key => [key, {text: '', reverse: false, shift: key === 'keyword' ? 0 : 3, word: key === 'keyword' ? 'BANANE' : key === 'columnar' ? 'ZEBRA' : 'ABC', factor: 5, offset: 8, matrix: 0, sorted: false, rows: 3, view: 'strip', step: 0}]));
@@ -123,6 +123,8 @@ function showMode(next, focus = false) {
   $('level').textContent = level;
   $('explanation').textContent = explanation;
   $('vigenere-square')?.remove();
+  $('hill-lesson')?.remove();
+  if (mode === 'hill') $('explanation').insertAdjacentHTML('afterend', hillLesson());
   if (mode === 'vigenere') $('explanation').insertAdjacentHTML('afterend', vigenereSquare());
   $('mission').textContent = mission;
   $('notice').textContent = '';
@@ -189,6 +191,39 @@ function vigenereSquare() {
     '<div class="square-scroll" role="region" tabindex="0" aria-label="Vigenère-Quadrat, seitlich scrollbar">' +
     '<table class="cipher-square"><caption>Vigenère-Quadrat</caption><thead><tr><th scope="col">Code ↓</th>' +
     header + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+}
+function hillPairSteps(pair, matrix) {
+  const [x,y] = [...pair].map(letter => alphabet.indexOf(letter));
+  return '<div class="hill-pair"><h4>' + pair + ' → ' + hill(pair,matrix) + '</h4><p>' +
+    pair[0] + ' = ' + x + ' und ' + pair[1] + ' = ' + y + '</p><ol>' +
+    [matrix.slice(0,2),matrix.slice(2)].map(([left,right],i) => {
+      const total = left*x + right*y;
+      const remainder = mod(total);
+      return '<li><b>Zeile ' + (i+1) + '</b><br>' + left + ' × ' + x + ' + ' + right + ' × ' + y + ' = ' + total +
+        '<br>' + total + ' = ' + Math.floor(total/26) + ' × 26 + <b>' + remainder + '</b>' +
+        '<br>Rest ' + remainder + ' → <b>' + alphabet[remainder] + '</b></li>';
+    }).join('') + '</ol></div>';
+}
+
+function hillLesson() {
+  const example = 'AUTO';
+  const matrix = matrices[0];
+  return '<section id="hill-lesson"><h3>Beispiel: AUTO verschlüsseln</h3>' +
+    '<h4>1. Buchstaben in Zahlen umwandeln</h4><p>Nummeriere das Alphabet ab 0. So wird aus AUTO die Folge <b>0, 20, 19, 14</b>.</p>' +
+    '<div class="hill-alphabet" aria-label="Alphabet mit Buchstabenwerten">' + [...alphabet].map((letter,i) =>
+      '<span' + (example.includes(letter) ? ' class="hill-mark"' : '') + '><b>' + letter + '</b><small>' + i + '</small></span>').join('') + '</div>' +
+    '<h4>2. Buchstabenpaare bilden</h4><p>Teile das Wort in <b>AU (0, 20)</b> und <b>TO (19, 14)</b>. Jedes Paar wird für sich verschlüsselt.</p>' +
+    '<h4>3. Zwei Rechnungen pro Paar</h4><p>In diesem Beispiel steht <b>3, 3</b> in der ersten Matrixzeile und <b>2, 5</b> in der zweiten. ' +
+    'Die linke Zahl jeder Zeile multiplizierst du mit dem ersten Buchstabenwert, die rechte mit dem zweiten. Addiere dann die Ergebnisse.</p>' +
+    '<h4>4. Den Rest behalten und zurück in Buchstaben übersetzen</h4><p>Das Alphabet hat 26 Buchstaben. ' +
+    'Ziehe deshalb so oft wie möglich 26 ab. Bei 60 bleiben nach zweimal 26 noch <b>8</b> übrig. In der Liste steht für 8 der Buchstabe <b>I</b>. Das nennt man <b>Modulo 26</b>.</p>' +
+    '<div class="hill-worked">' + hillPairSteps('AU',matrix) + hillPairSteps('TO',matrix) + '</div>' +
+    '<p class="hill-total"><b>' + example + ' → ' + hill(example,matrix) + '</b></p>' +
+    '<h4>Probier es selbst aus</h4><p>Setze das Beispiel ins Eingabefeld ein. Vergleiche danach HA und HB. ' +
+    'Bei Hill kann schon ein geänderter Buchstabe das ganze verschlüsselte Paar verändern.</p>' +
+    '<button type="button" id="hill-example">AUTO mit Beispielmatrix einsetzen</button>' +
+    '<p class="caption">Beim Entschlüsseln verwendet das Labor die Umkehrmatrix. Leer- und Satzzeichen entfallen. ' +
+    'Bei ungerader Länge wird ein X ergänzt. Prüfe nach dem Entschlüsseln, ob das letzte X ein Füllzeichen war.</p></section>';
 }
 function frequencies(text) {
   const counts = Object.fromEntries([...alphabet].map(letter => [letter, 0]));
@@ -276,12 +311,7 @@ function update() {
     const pair = ((!s.reverse ? input : answer) + 'X').slice(0,2);
     visual = '<p><b>Schlüsselmatrix</b></p><table class="hill-matrix" aria-label="Schlüsselmatrix"><tr><td>' + a +
       '</td><td>' + b + '</td></tr><tr><td>' + c + '</td><td>' + d + '</td></tr></table>';
-    if (pair.length === 2 && answer) {
-      const [x,y] = [...pair].map(char => alphabet.indexOf(char));
-      visual += '<p>Erstes Klartextpaar <b>' + pair + '</b> → (' + x + ', ' + y + ')</p><p>(' +
-        a + ' × ' + x + ' + ' + b + ' × ' + y + ') mod 26 = ' + mod(a*x+b*y) + ' · (' +
-        c + ' × ' + x + ' + ' + d + ' × ' + y + ') mod 26 = ' + mod(c*x+d*y) + ' → <b>' + hill(pair,matrix) + '</b></p>';
-    }
+    if (pair.length === 2 && answer) visual += '<p><b>Rechenweg für das erste Klartextpaar</b></p>' + hillPairSteps(pair,matrix);
   } else if (mode === 'rail') {
     answer = rail(s.text, s.rows, s.reverse);
     const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,24);
@@ -358,6 +388,13 @@ bench.addEventListener('click', async event => {
     else s.text = substitute(example, mapping());
     s.step = 0;
   }
+  if (button.id === 'hill-example') {
+    s.text = 'AUTO';
+    s.matrix = 0;
+    s.reverse = false;
+    $('matrix').value = '0';
+    source.focus();
+  }
   if (button.id === 'clear') { s.text = ''; s.step = 0; }
   if (button.id === 'use-result') { s.text = result.value; s.reverse = !s.reverse; s.step = 0; }
   if (button.id === 'copy') {
@@ -389,6 +426,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
