@@ -121,19 +121,25 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 .letters .keyword-letter { background:#f5d9dc; color:#59252e; }
 .letters .keyword-letter.lit { box-shadow:inset 0 0 0 2px var(--petrol); border-radius:.2rem; }
 
-.pigpen-header { display:flex; flex-wrap:wrap; gap:.8rem; align-items:flex-start; justify-content:space-between; }
-.pigpen-header > p { flex:1 1 12rem; max-width:25rem; }
-.pigpen-key {
+.symbol-header { display:flex; flex-wrap:wrap; gap:.8rem; align-items:flex-start; justify-content:space-between; }
+.symbol-header > p { flex:1 1 12rem; max-width:25rem; }
+.symbol-key {
   margin-left:auto; min-width:0; padding:.55rem .75rem .7rem; border:1px solid #91a7b2;
   border-radius:.6rem; background:#f5f9fa;
 }
-.pigpen-key h3 { font-size:1rem; }
+.symbol-key h3 { font-size:1rem; }
 .key-pairs { display:flex; flex-wrap:wrap; gap:.5rem 1rem; }
-.pigpen-key figure { margin:.3rem 0 0; }
-.pigpen-key figcaption { font-size:.82rem; font-weight:700; }
+.symbol-key figure { margin:.3rem 0 0; }
+.symbol-key figcaption { font-size:.82rem; font-weight:700; }
 .key-diagrams { display:flex; align-items:center; gap:.3rem; }
 .key-diagrams svg { width:3.35rem; height:3.35rem; color:#173a4c; }
 .key-diagrams svg path { fill:none; stroke:currentColor; stroke-width:1.5; }
 .key-diagrams svg text { fill:currentColor; font:700 11px system-ui; text-anchor:middle; dominant-baseline:central; }
 .key-diagrams svg circle { fill:currentColor; }
-.pigpen-header + .symbol-table { margin-top:.8rem; }
+.symbol-header + .symbol-table { margin-top:.8rem; }
+
+.templar-key-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:.2rem; margin-top:.4rem; }
+.templar-key-grid > span { display:flex; align-items:center; justify-content:center; gap:.1rem; padding:.15rem; background:#e6eff2; border-radius:.2rem; }
+.templar-key-grid b { font-size:.79rem; }
+.templar-key-grid svg { width:1.3rem; height:1.3rem; min-width:0; }
+@media(max-width:420px) { .templar-key-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }

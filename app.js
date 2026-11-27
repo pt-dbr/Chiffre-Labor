@@ -63,10 +63,15 @@ function pigpenKey() {
       path('M3 3l58 58M61 3L3 61') +
       [...cross].map((letter, i) => label(letter, ...positions[i])).join('') + '</svg></div></figure>';
   };
-  return '<div class="pigpen-header"><p>Suche den Buchstaben in der Schlüsseltafel. Die Linien um sein Feld bilden das Symbol.</p>' +
-    '<aside class="pigpen-key" aria-label="Freimaurer-Schlüsseltafel"><h3>Schlüsseltafel</h3><div class="key-pairs">' +
+  return '<div class="symbol-header"><p>Suche den Buchstaben in der Schlüsseltafel. Die Linien um sein Feld bilden das Symbol.</p>' +
+    '<aside class="symbol-key" aria-label="Freimaurer-Schlüsseltafel"><h3>Schlüsseltafel</h3><div class="key-pairs">' +
     key('Ohne Punkt', 'ABCDEFGHI', 'STUV', false) + key('Mit Punkt', 'JKLMNOPQR', 'WXYZ', true) +
     '</div></aside></div>';
+}
+function templarKey() {
+  return '<div class="symbol-header"><p>Suche einen Buchstaben in der Schlüsseltafel und lies das Zeichen daneben ab.</p>' +
+    '<aside class="symbol-key" aria-label="Templer-Schlüsseltafel"><h3>Schlüsseltafel</h3><div class="templar-key-grid">' +
+    [...alphabet].map(letter => '<span><b>' + letter + '</b>' + symbol(letter) + '</span>').join('') + '</div></aside></div>';
 }
 function encodeTokens(text) {
   return Array.from(normalize(text), character => alphabet.includes(character)
@@ -145,7 +150,7 @@ function frequencies(text) {
 }
 function update() {
   const s = state();
-  const pigpen = mode === 'pigpen';
+  const usesSymbols = symbolMode();
   const mapMode = ['caesar','keyword','atbash'].includes(mode);
   $('shift-value')?.replaceChildren('+' + s.shift);
   bench.querySelectorAll('[data-direction]').forEach(btn => btn.setAttribute('aria-pressed', String((btn.dataset.direction === 'decode') === s.reverse)));
@@ -153,13 +158,13 @@ function update() {
   $('source-label').textContent = s.reverse || mode === 'crack' ? 'Geheimtext' : 'Klartext';
   $('result-label').textContent = s.reverse || mode === 'crack' ? 'Klartext' : 'Geheimtext';
   $('symbol-input').hidden = $('symbol-result').hidden = true;
-  source.hidden = pigpen && s.reverse;
-  result.hidden = pigpen && !s.reverse;
+  source.hidden = usesSymbols && s.reverse;
+  result.hidden = usesSymbols && !s.reverse;
   result.parentElement.hidden = mode === 'crack';
-  $('copy').hidden = mode === 'crack' || (pigpen && !s.reverse);
+  $('copy').hidden = mode === 'crack' || (usesSymbols && !s.reverse);
   $('use-result').hidden = mode === 'crack';
   source.maxLength = symbolMode() && s.reverse ? 14000 : 1200;
-  source.placeholder = symbolMode() && s.reverse ? 'Zeichen antippen oder Symbolcode einfügen …' : 'Schreib eine Nachricht …';
+  source.placeholder = 'Schreib eine Nachricht …';
   $('convention').textContent = 'A–Z · Ä → AE, Ö → OE, Ü → UE, ß → SS. Andere Zeichen bleiben erhalten.';
   let visual;
   let answer;
@@ -180,26 +185,18 @@ function update() {
     const tokens = tokenParts(s.reverse ? s.text : encodeTokens(s.text));
     answer = s.reverse ? tokens.map(token => token.letter || token.other).join('') : encodeTokens(s.text);
     renderSymbols(s.reverse ? 'symbol-input' : 'symbol-result', tokens);
-    $('result-label').textContent = s.reverse ? 'Klartext' : pigpen ? 'Geheimtext' : 'Symbolcode zum Kopieren';
-    if (pigpen) {
-      if (s.reverse) $('source-label').textContent = 'Angetippte Symbole';
-      $('convention').textContent = s.reverse
-        ? 'Tippe die Symbole deiner Nachricht der Reihe nach an. Der Klartext erscheint darunter.'
-        : 'Die Freimaurer-Zeichen erscheinen im Geheimtext. Mit „Ergebnis übernehmen“ kannst du sie direkt entschlüsseln.';
-    } else {
-      $('convention').textContent += ' Die Zahlen speichern die Zeichen zum Kopieren. Ein Leerzeichen erscheint in der Vorschau als Mittelpunkt.';
-      if (tokens.some(token => token.invalid)) $('notice').textContent = 'Unbekannter Symbolcode. Nutze die Zeichentafel oder füge einen kopierten Symbolcode ein.';
+    if (s.reverse) $('source-label').textContent = 'Angetippte Symbole';
+    $('convention').textContent = s.reverse
+      ? 'Tippe die Symbole deiner Nachricht der Reihe nach an. Der Klartext erscheint darunter.'
+      : 'Die Zeichen erscheinen im Geheimtext. Mit „Ergebnis übernehmen“ kannst du sie direkt entschlüsseln.';
+    visual = mode === 'pigpen' ? pigpenKey() : templarKey();
+    if (s.reverse) {
+      visual += '<div class="symbol-table">' + [...alphabet].map((letter, i) =>
+        '<button data-token="' + String(i + 1).padStart(2,'0') + '" aria-label="Zeichen für ' + letter + '">' +
+        symbol(letter) + '</button>').join('') +
+        '<button data-token="U+20">Leerzeichen</button><button data-token="back">Letztes Zeichen löschen</button></div>';
     }
-    visual = pigpen ? pigpenKey() : '';
-    if (!pigpen || s.reverse) visual += '<div class="symbol-table">' + [...alphabet].map((letter, i) => {
-      const glyph = symbol(letter);
-      const caption = pigpen ? '' : '<small>' + letter + '</small>';
-      return s.reverse
-        ? '<button data-token="' + String(i + 1).padStart(2,'0') + '" aria-label="Zeichen für ' + letter + '">' + glyph + caption + '</button>'
-        : '<span>' + glyph + caption + '</span>';
-    }).join('') +
-      (s.reverse ? '<button data-token="U+20">Leerzeichen</button><button data-token="back">Letztes Zeichen löschen</button>' : '') + '</div>';
-   } else if (mode === 'rail') {
+  } else if (mode === 'rail') {
     answer = rail(s.text, s.rows, s.reverse);
     const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,24);
     const route = railPath(chars.length, s.rows);
@@ -302,6 +299,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
