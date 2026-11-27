@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172b3a">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; object-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Chiffre-Labor</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="cipher.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header class="top"><div class="frame mast"><img src="if-pe.png" alt="IF-PE" width="126" height="42"><span>Informatik · Klasse 5–10</span></div></header>
+<main class="frame">
+  <section class="intro"><h1>Chiffre-Labor</h1><p>Schreib geheime Nachrichten. Knack den Code!</p></section>
+  <div class="layout">
+    <nav class="rack" aria-label="Chiffren und Werkzeuge">
+      <h2>Verfahren</h2>
+      <button data-mode="caesar"><span class="nav-icon">↻</span>Cäsar</button>
+      <button data-mode="keyword"><span class="nav-icon">Aa</span>Schlüsselwort</button>
+      <button data-mode="pigpen"><span class="nav-icon">⊞</span>Freimaurer</button>
+      <button data-mode="templar"><span class="nav-icon">◇</span>Templer</button>
+      <button data-mode="atbash"><span class="nav-icon">⇄</span>Spiegelalphabet</button>
+      <button data-mode="rail"><span class="nav-icon">⌁</span>Gartenzaun</button>
+      <button data-mode="vigenere"><span class="nav-icon">••</span>Vigenère</button>
+      <h2>Werkzeuge</h2>
+      <button data-mode="crack"><span class="nav-icon">⌕</span>Knack-Labor</button>
+    </nav>
+    <article class="bench" id="bench">
+      <header class="bench-head"><div><h2 id="mode-title" tabindex="-1"></h2><p id="description"></p></div><span id="level"></span></header>
+      <div class="controls" id="controls"></div>
+      <section id="visual" class="visual" aria-label="Darstellung der Chiffre"></section>
+      <div class="editor">
+        <section><label for="source" id="source-label">Klartext</label><textarea id="source" maxlength="1200" rows="5" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Schreib eine Nachricht …"></textarea><div id="symbol-input" class="symbols" hidden></div></section>
+        <section><label for="result" id="result-label">Geheimtext</label><textarea id="result" rows="5" readonly spellcheck="false"></textarea><div id="symbol-result" class="symbols" hidden></div></section>
+      </div>
+      <div class="actions"><button id="example">Beispiel einsetzen</button><button id="use-result">Ergebnis übernehmen</button><button id="copy">Kopieren</button><button id="clear">Leeren</button><span id="notice" role="status"></span></div>
+      <p id="convention" class="note"></p>
+      <details id="learn"><summary>So funktioniert’s</summary><p id="explanation"></p></details>
+      <details id="challenge"><summary>Forscherauftrag</summary><p id="mission"></p></details>
+    </article>
+  </div>
+  <footer>Deine Texte bleiben auf deinem Gerät. Klassische Chiffren eignen sich für Rätsel und Unterricht.</footer>
+</main>
+</body>
+</html>
+
+
