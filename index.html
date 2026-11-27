@@ -13,7 +13,39 @@
 <body>
 <header class="top"><div class="frame mast"><img src="if-pe.png" alt="IF-PE" width="126" height="42"><span>Informatik · Klasse 5–10</span></div></header>
 <main class="frame">
-  <section class="intro"><h1>Chiffre-Labor</h1><p>Schreib geheime Nachrichten. Knack den Code!</p></section>
+  <section class="intro">
+    <h1 class="title-plate">
+      <span class="title-readable">Chiffre-Labor</span>
+      <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 900 148" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="title-metal" x2=".14" y2="1">
+            <stop stop-color="#2b758c"/>
+            <stop offset=".28" stop-color="#195971"/>
+            <stop offset=".58" stop-color="#123b50"/>
+            <stop offset=".8" stop-color="#1e5e74"/>
+            <stop offset="1" stop-color="#102f42"/>
+          </linearGradient>
+          <pattern id="title-grain" width="4" height="4" patternUnits="userSpaceOnUse">
+            <path d="M0 1H4" stroke="#fff" stroke-opacity=".12"/>
+            <path d="M0 3H4" stroke="#061a24" stroke-opacity=".24"/>
+          </pattern>
+          <text id="title-cutout" x="450" y="104" text-anchor="middle">Chiffre-Labor</text>
+          <mask id="title-mask" x="0" y="0" width="900" height="148" maskUnits="userSpaceOnUse">
+            <rect width="900" height="148" fill="white"/>
+            <use href="#title-cutout" xlink:href="#title-cutout" fill="black"/>
+          </mask>
+        </defs>
+        <g mask="url(#title-mask)">
+          <rect x="1" y="1" width="898" height="146" rx="16" fill="url(#title-metal)" stroke="#102b3a" stroke-width="2"/>
+          <rect x="2" y="2" width="896" height="144" rx="15" fill="url(#title-grain)"/>
+          <rect x="5" y="5" width="890" height="138" rx="12" fill="none" stroke="#a8d0dc" stroke-opacity=".48"/>
+          <use href="#title-cutout" xlink:href="#title-cutout" fill="none" stroke="#081e2a" stroke-width="4"/>
+          <use href="#title-cutout" xlink:href="#title-cutout" y="1.8" fill="none" stroke="#70a7bb" stroke-opacity=".72" stroke-width="1.4"/>
+        </g>
+      </svg>
+    </h1>
+    <p>Schreib geheime Nachrichten. Knack den Code!</p>
+  </section>
   <div class="layout">
     <nav class="rack" aria-label="Chiffren und Werkzeuge">
       <h2>Verfahren</h2>
@@ -45,5 +77,6 @@
 </main>
 </body>
 </html>
+
 
 
