@@ -17,7 +17,7 @@ const modes = {
   hill: ['Hill-Chiffre', 'Verschlüssele Buchstabenpaare mit einer Matrix.', 'Ab Klasse 10', 'A zählt als 0, Z als 25. Multipliziere die beiden Zahlen eines Paars mit der Schlüsselmatrix und nimm jeweils den Rest bei Division durch 26. Zum Entschlüsseln wird die Umkehrmatrix verwendet. Leerzeichen und Satzzeichen entfallen. Bei ungerader Länge ergänzt die App ein X. Prüfe nach dem Entschlüsseln, ob das letzte X ein Füllzeichen war.', 'Vergleiche HA und HB. Wie viele Zeichen im Ergebnis ändern sich? Wechsle danach die Schlüsselmatrix.'],
   crack: ['Knack-Labor', 'Probiere alle Cäsar-Schlüssel und finde die lesbare Nachricht.', 'Ab Klasse 7', 'Bei Cäsar gibt es 26 Möglichkeiten einschließlich 0. Die Buchstabenhäufigkeit zeigt, welche Zeichen oft vorkommen. Bei kurzen Texten ist sie nur ein schwacher Hinweis.', 'Setze das Beispiel ein und finde einen lesbaren Satz. Zähle, wie viele Verschiebungen du ausprobiert hast.']
 };
-const drafts = Object.fromEntries(Object.keys(modes).map(key => [key, {text: '', reverse: false, shift: key === 'keyword' ? 0 : 3, word: key === 'keyword' ? 'BANANE' : key === 'columnar' ? 'ZEBRA' : 'ABC', factor: 5, offset: 8, matrix: 0, rows: 3, view: 'strip', step: 0}]));
+const drafts = Object.fromEntries(Object.keys(modes).map(key => [key, {text: '', reverse: false, shift: key === 'keyword' ? 0 : 3, word: key === 'keyword' ? 'BANANE' : key === 'columnar' ? 'ZEBRA' : 'ABC', factor: 5, offset: 8, matrix: 0, sorted: false, rows: 3, view: 'strip', step: 0}]));
 drafts.caesar.text = 'HALLO';
 let mode = 'caesar';
 let drag;
@@ -144,6 +144,7 @@ function showMode(next, focus = false) {
     controls.push(selectControl('Verschiebung b', 'offset', [...alphabet].map((_,n) => [n,n])));
   }
   if (mode === 'hill') controls.push(selectControl('Schlüsselmatrix', 'matrix', matrices.map(([a,b,c,d],i) => [i, a + ' ' + b + ' / ' + c + ' ' + d])));
+  if (mode === 'columnar') controls.push('<button type="button" id="sort-columns" aria-pressed="false">Spalten sortieren</button>');
   $('controls').innerHTML = controls.join('');
   if ($('word')) $('word').value = state().word;
   if ($('rows')) $('rows').value = state().rows;
@@ -248,12 +249,18 @@ function update() {
     answer = columnar(s.text, code, s.reverse);
     const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,72);
     const order = columnOrder(code);
+    const columns = s.sorted ? order : [...code].map((_,i) => i);
+    const sortButton = $('sort-columns');
+    sortButton.setAttribute('aria-pressed', String(s.sorted));
+    sortButton.disabled = code.length < 2;
     visual = code.length < 2 ? '<p>Das Codewort braucht mindestens zwei Buchstaben.</p>' :
-      '<div class="square-scroll" tabindex="0" aria-label="Spaltentabelle"><table class="cipher-square"><caption>Spalten in Ablesereihenfolge nummeriert</caption><thead><tr>' +
-      [...code].map((char,i) => '<th scope="col">' + char + ' · ' + (order.indexOf(i)+1) + '</th>').join('') +
+      '<div class="square-scroll" tabindex="0" aria-label="Spaltentabelle"><table class="cipher-square"><caption>' +
+      (s.sorted ? 'Sortiert: Spalte für Spalte von oben nach unten lesen' : 'Ursprüngliche Spalten mit Nummern für die Ablesereihenfolge') +
+      '</caption><thead><tr>' + columns.map(i => '<th scope="col">' + code[i] + ' · ' + (order.indexOf(i)+1) + '</th>').join('') +
       '</tr></thead><tbody>' + Array.from({length:Math.ceil(chars.length/code.length)}, (_,row) => '<tr>' +
-      [...code].map((_,i) => '<td>' + escape((chars[row*code.length+i] || '').replace(' ','·')) + '</td>').join('') + '</tr>').join('') +
-      '</tbody></table></div>';
+      columns.map(i => '<td>' + escape((chars[row*code.length+i] || '').replace(' ','·')) + '</td>').join('') + '</tr>').join('') +
+      '</tbody></table></div>' + (Array.from(normalize(s.reverse ? answer : s.text)).length > chars.length ?
+      '<p class="caption">Die Tabelle zeigt die ersten 72 Zeichen. Das Ergebnis enthält den vollständigen Text.</p>' : '');
   } else if (mode === 'affine') {
     const key = affineKey(s.factor,s.offset);
     answer = substitute(s.text,key,s.reverse);
@@ -330,6 +337,7 @@ bench.addEventListener('click', async event => {
   }
   if (shift) s.shift = mod(s.shift + Number(shift));
   if (view) s.view = view;
+  if (button.id === 'sort-columns') s.sorted = !s.sorted;
   if (step) s.step += Number(step);
   if (token) {
     const digits = s.text.trim() ? s.text.trim().split(/\s+/) : [];
@@ -381,6 +389,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
