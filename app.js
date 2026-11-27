@@ -127,6 +127,7 @@ function frequencies(text) {
 }
 function update() {
   const s = state();
+  const pigpen = mode === 'pigpen';
   const mapMode = ['caesar','keyword','atbash'].includes(mode);
   $('shift-value')?.replaceChildren('+' + s.shift);
   bench.querySelectorAll('[data-direction]').forEach(btn => btn.setAttribute('aria-pressed', String((btn.dataset.direction === 'decode') === s.reverse)));
@@ -134,8 +135,11 @@ function update() {
   $('source-label').textContent = s.reverse || mode === 'crack' ? 'Geheimtext' : 'Klartext';
   $('result-label').textContent = s.reverse || mode === 'crack' ? 'Klartext' : 'Geheimtext';
   $('symbol-input').hidden = $('symbol-result').hidden = true;
+  source.hidden = pigpen && s.reverse;
+  result.hidden = pigpen && !s.reverse;
   result.parentElement.hidden = mode === 'crack';
-  $('copy').hidden = $('use-result').hidden = mode === 'crack';
+  $('copy').hidden = mode === 'crack' || (pigpen && !s.reverse);
+  $('use-result').hidden = mode === 'crack';
   source.maxLength = symbolMode() && s.reverse ? 14000 : 1200;
   source.placeholder = symbolMode() && s.reverse ? 'Zeichen antippen oder Symbolcode einfügen …' : 'Schreib eine Nachricht …';
   $('convention').textContent = 'A–Z · Ä → AE, Ö → OE, Ü → UE, ß → SS. Andere Zeichen bleiben erhalten.';
@@ -158,14 +162,25 @@ function update() {
     const tokens = tokenParts(s.reverse ? s.text : encodeTokens(s.text));
     answer = s.reverse ? tokens.map(token => token.letter || token.other).join('') : encodeTokens(s.text);
     renderSymbols(s.reverse ? 'symbol-input' : 'symbol-result', tokens);
-    $('result-label').textContent = s.reverse ? 'Klartext' : 'Symbolcode zum Kopieren';
-    $('convention').textContent += ' Die Zahlen speichern die Zeichen zum Kopieren. Ein Leerzeichen erscheint in der Vorschau als Mittelpunkt.';
-    if (tokens.some(token => token.invalid)) $('notice').textContent = 'Unbekannter Symbolcode. Nutze die Zeichentafel oder füge einen kopierten Symbolcode ein.';
-    visual = '<div class="symbol-table">' + [...alphabet].map((letter, i) => s.reverse
-      ? '<button data-token="' + String(i + 1).padStart(2,'0') + '" aria-label="Zeichen ' + letter + '">' + symbol(letter) + '<small>' + letter + '</small></button>'
-      : '<span>' + symbol(letter) + '<small>' + letter + '</small></span>').join('') +
+    $('result-label').textContent = s.reverse ? 'Klartext' : pigpen ? 'Geheimtext' : 'Symbolcode zum Kopieren';
+    if (pigpen) {
+      if (s.reverse) $('source-label').textContent = 'Angetippte Symbole';
+      $('convention').textContent = s.reverse
+        ? 'Tippe die Symbole deiner Nachricht der Reihe nach an. Der Klartext erscheint darunter.'
+        : 'Die Freimaurer-Zeichen erscheinen im Geheimtext. Mit „Ergebnis übernehmen“ kannst du sie direkt entschlüsseln.';
+    } else {
+      $('convention').textContent += ' Die Zahlen speichern die Zeichen zum Kopieren. Ein Leerzeichen erscheint in der Vorschau als Mittelpunkt.';
+      if (tokens.some(token => token.invalid)) $('notice').textContent = 'Unbekannter Symbolcode. Nutze die Zeichentafel oder füge einen kopierten Symbolcode ein.';
+    }
+    visual = '<div class="symbol-table">' + [...alphabet].map((letter, i) => {
+      const glyph = symbol(letter);
+      const caption = pigpen ? '' : '<small>' + letter + '</small>';
+      return s.reverse
+        ? '<button data-token="' + String(i + 1).padStart(2,'0') + '" aria-label="Zeichen für ' + letter + '">' + glyph + caption + '</button>'
+        : '<span>' + glyph + caption + '</span>';
+    }).join('') +
       (s.reverse ? '<button data-token="U+20">Leerzeichen</button><button data-token="back">Letztes Zeichen löschen</button>' : '') + '</div>';
-  } else if (mode === 'rail') {
+   } else if (mode === 'rail') {
     answer = rail(s.text, s.rows, s.reverse);
     const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,24);
     const route = railPath(chars.length, s.rows);
@@ -268,6 +283,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
