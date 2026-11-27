@@ -117,3 +117,6 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
   .rack button { gap:.32rem; padding:.4rem; font-size:.82rem; }
   .strip-line strong { flex-basis:5.6rem; font-size:.69rem; }
 }
+
+.letters .keyword-letter { background:#f5d9dc; color:#59252e; }
+.letters .keyword-letter.lit { box-shadow:inset 0 0 0 2px var(--petrol); border-radius:.2rem; }

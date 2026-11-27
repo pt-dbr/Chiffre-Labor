@@ -99,10 +99,14 @@ function mapping() {
   return rotate(mode === 'keyword' ? keyword(state().word) : alphabet, state().shift);
 }
 function strip(key, active) {
-  const row = (name, chars, activeChar) => '<div class="strip-line"><strong>' + name + '</strong><div class="letters">' +
-    [...chars].map(char => '<span' + (char === activeChar ? ' class="lit"' : '') + '>' + char + '</span>').join('') + '</div></div>';
+  const highlights = mode === 'keyword' ? letters(state().word) : '';
+  const row = (name, chars, activeChar, keywordLetters = '') => '<div class="strip-line"><strong>' + name + '</strong><div class="letters">' +
+    [...chars].map(char => {
+      const classes = [char === activeChar ? 'lit' : '', keywordLetters.includes(char) ? 'keyword-letter' : ''].filter(Boolean);
+      return '<span class="' + classes.join(' ') + '">' + char + '</span>';
+    }).join('') + '</div></div>';
   return '<div class="strips" ' + (mode !== 'atbash' ? 'data-drag="true"' : '') + '>' +
-    row('Klaralphabet', alphabet, active) + row('Geheimalphabet', key, key[alphabet.indexOf(active)]) + '</div>';
+    row('Klaralphabet', alphabet, active) + row('Geheimalphabet', key, key[alphabet.indexOf(active)], highlights) + '</div>';
 }
 function wheel(key, active) {
   const ring = (chars, radius, mark) => [...chars].map((letter, index) => {
@@ -264,5 +268,6 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
