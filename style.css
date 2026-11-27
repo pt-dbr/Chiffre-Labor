@@ -143,3 +143,14 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 .templar-key-grid b { font-size:.79rem; }
 .templar-key-grid svg { width:1.3rem; height:1.3rem; min-width:0; }
 @media(max-width:420px) { .templar-key-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+
+.templar-origin { margin-top:.8rem; }
+.templar-origin + .symbol-table { margin-top:.8rem; }
+.origin-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(8.5rem,100%),1fr)); gap:.55rem; padding:.2rem 0 .8rem; }
+.origin-grid figure { margin:0; padding:.5rem; border:1px solid #a5b8c2; border-radius:.45rem; background:#fff; }
+.origin-grid svg { display:block; width:min(100%,6.5rem); aspect-ratio:1; margin:0 auto .4rem; background:#a62738; border-radius:.25rem; }
+.cross-arm { fill:#fff; }
+.cross-guide { fill:none; stroke:#8a9ca5; stroke-width:.7; }
+.cross-only .cross-guide { display:none; }
+.cross-outline { fill:none; stroke:#142837; stroke-width:2.15; stroke-linejoin:round; stroke-linecap:round; }
+.origin-grid figcaption { font-size:.85rem; }

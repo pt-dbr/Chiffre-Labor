@@ -73,6 +73,27 @@ function templarKey() {
     '<aside class="symbol-key" aria-label="Templer-Schlüsseltafel"><h3>Schlüsseltafel</h3><div class="templar-key-grid">' +
     [...alphabet].map(letter => '<span><b>' + letter + '</b>' + symbol(letter) + '</span>').join('') + '</div></aside></div>';
 }
+function templarOrigin() {
+  const arms = [0, 90, 180, 270].map(angle =>
+    '<g transform="rotate(' + angle + ' 50 50)"><path class="cross-arm" d="M50 50L34 12l16 16 16-16Z"/>' +
+    '<path class="cross-guide" d="M43.7 35h12.6M43.7 35L50 28l6.3 7"/></g>').join('');
+  const stages = [
+    ['Das Kreuz', '', 'Vier Arme mit je zwei Spitzen.'],
+    ['Hilfslinien', '', 'Gedachte Linien unterteilen die Arme.'],
+    ['Winkel · A–D', 'M34 12l16 16 16-16', 'Die V-Form entsteht an den Spitzen.'],
+    ['Dreiecke · E–H', 'M43.7 35h12.6L50 50Z', 'Zwei Seiten und eine Hilfslinie bilden ein Dreieck.'],
+    ['Rauten · I, K, L, M', 'M50 28l6.3 7L50 50l-6.3-15Z', 'Zwei Dreiecke bilden eine rautenartige Form.'],
+    ['Kreuzmitte · N', 'M43.7 35l12.6 30M56.3 35L43.7 65', 'Die Linien treffen sich in der Mitte.']
+  ];
+  return '<details class="templar-origin"><summary>Wie entstehen die Zeichen aus dem Kreuz?</summary>' +
+    '<div class="origin-grid">' + stages.map(([title, outline, description], i) =>
+      '<figure><svg viewBox="0 0 100 100" aria-hidden="true"' + (i === 0 ? ' class="cross-only"' : '') + '>' +
+      arms + (outline ? '<path class="cross-outline" d="' + outline + '"/>' : '') +
+      '</svg><figcaption><b>' + title + '</b><br>' + description + '</figcaption></figure>').join('') + '</div>' +
+    '<p>Durch Drehen entstehen weitere Zeichen. Ein Punkt unterscheidet die zweite Zeichengruppe. ' +
+    'Die Skizzen zeigen das Prinzip. Die genauen, vereinfacht gezeichneten Zeichen des Labors findest du in der Schlüsseltafel. ' +
+    'Für J nutzt das Labor ein Kreuzzeichen mit zusätzlichem Punkt.</p></details>';
+}
 function encodeTokens(text) {
   return Array.from(normalize(text), character => alphabet.includes(character)
     ? String(alphabet.indexOf(character) + 1).padStart(2, '0')
@@ -189,7 +210,7 @@ function update() {
     $('convention').textContent = s.reverse
       ? 'Tippe die Symbole deiner Nachricht der Reihe nach an. Der Klartext erscheint darunter.'
       : 'Die Zeichen erscheinen im Geheimtext. Mit „Ergebnis übernehmen“ kannst du sie direkt entschlüsseln.';
-    visual = mode === 'pigpen' ? pigpenKey() : templarKey();
+    visual = mode === 'pigpen' ? pigpenKey() : templarKey() + templarOrigin();
     if (s.reverse) {
       visual += '<div class="symbol-table">' + [...alphabet].map((letter, i) =>
         '<button data-token="' + String(i + 1).padStart(2,'0') + '" aria-label="Zeichen für ' + letter + '">' +
@@ -299,6 +320,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
