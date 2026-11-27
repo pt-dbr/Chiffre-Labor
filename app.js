@@ -50,6 +50,24 @@ function symbol(letter) {
   return '<svg aria-hidden="true" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">' + ink + '</svg>';
 }
 
+function pigpenKey() {
+  const key = (title, grid, cross, dotted) => {
+    const label = (letter, x, y) => '<text x="' + x + '" y="' + y + '">' + letter + '</text>' +
+      (dotted ? '<circle cx="' + (x + 7) + '" cy="' + (y - 4) + '" r="1.25"/>' : '');
+    const positions = [[32,9],[54,32],[32,55],[10,32]];
+    return '<figure><figcaption>' + title + '</figcaption><div class="key-diagrams">' +
+      '<svg viewBox="0 0 64 64" role="img" aria-label="Gitter ' + grid.split('').join(' ') + '">' +
+      path('M22 2v60M42 2v60M2 22h60M2 42h60') +
+      [...grid].map((letter, i) => label(letter, 12 + i % 3 * 20, 12 + Math.floor(i / 3) * 20)).join('') +
+      '</svg><svg viewBox="0 0 64 64" role="img" aria-label="Kreuz, von oben im Uhrzeigersinn: ' + cross.split('').join(' ') + '">' +
+      path('M3 3l58 58M61 3L3 61') +
+      [...cross].map((letter, i) => label(letter, ...positions[i])).join('') + '</svg></div></figure>';
+  };
+  return '<div class="pigpen-header"><p>Suche den Buchstaben in der Schlüsseltafel. Die Linien um sein Feld bilden das Symbol.</p>' +
+    '<aside class="pigpen-key" aria-label="Freimaurer-Schlüsseltafel"><h3>Schlüsseltafel</h3><div class="key-pairs">' +
+    key('Ohne Punkt', 'ABCDEFGHI', 'STUV', false) + key('Mit Punkt', 'JKLMNOPQR', 'WXYZ', true) +
+    '</div></aside></div>';
+}
 function encodeTokens(text) {
   return Array.from(normalize(text), character => alphabet.includes(character)
     ? String(alphabet.indexOf(character) + 1).padStart(2, '0')
@@ -172,7 +190,8 @@ function update() {
       $('convention').textContent += ' Die Zahlen speichern die Zeichen zum Kopieren. Ein Leerzeichen erscheint in der Vorschau als Mittelpunkt.';
       if (tokens.some(token => token.invalid)) $('notice').textContent = 'Unbekannter Symbolcode. Nutze die Zeichentafel oder füge einen kopierten Symbolcode ein.';
     }
-    visual = '<div class="symbol-table">' + [...alphabet].map((letter, i) => {
+    visual = pigpen ? pigpenKey() : '';
+    if (!pigpen || s.reverse) visual += '<div class="symbol-table">' + [...alphabet].map((letter, i) => {
       const glyph = symbol(letter);
       const caption = pigpen ? '' : '<small>' + letter + '</small>';
       return s.reverse
@@ -283,6 +302,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 
