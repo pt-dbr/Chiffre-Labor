@@ -172,3 +172,5 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 .cipher-square tr:nth-child(even) td { background:#eaf2f5; }
 .cipher-square .square-example { color:white; background:#14546b; font-weight:850; }
 
+
+.hill-matrix { border-inline:2px solid var(--ink); border-collapse:separate; border-spacing:.75rem .15rem; margin:.35rem 0; text-align:center; font-weight:750; }

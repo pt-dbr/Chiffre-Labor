@@ -1,5 +1,5 @@
 'use strict';
-const {alphabet, normalize, letters, mod, rotate, keyword, substitute, vigenere, railPath, rail} = Cipher;
+const {alphabet, normalize, letters, mod, rotate, keyword, substitute, vigenere, railPath, rail, columnOrder, columnar, units, affineKey, matrices, hill} = Cipher;
 const $ = id => document.getElementById(id);
 const bench = $('bench');
 const source = $('source');
@@ -12,9 +12,12 @@ const modes = {
   atbash: ['Spiegelalphabet', 'Lies das Geheimalphabet von Z bis A.', 'Ab Klasse 5', 'A wird Z, B wird Y, und so weiter. Wende das Spiegelalphabet zweimal an, um den ursprünglichen Text zurückzubekommen.', 'Finde ein Wort, dessen Geheimtext mit demselben Buchstaben beginnt, mit dem das Wort endet.'],
   rail: ['Gartenzaun', 'Verteile deine Nachricht im Zickzack auf mehrere Zeilen.', 'Ab Klasse 7', 'Schreibe die Zeichen im Zickzack hinunter und hinauf. Lies dann jede Zeile von links nach rechts. Leerzeichen wandern dabei mit.', 'Vergleiche zwei und drei Zeilen. Welche Buchstaben behalten ihren Platz?'],
   vigenere: ['Vigenère', 'Jeder Buchstabe deines Schlüsselworts bestimmt eine Verschiebung.', 'Ab Klasse 8', 'A bedeutet Verschiebung 0, B bedeutet 1, Z bedeutet 25. Das Schlüsselwort wiederholt sich. Leer- und Satzzeichen verbrauchen keinen Schlüsselbuchstaben.', 'Verschlüssle AAAAAA einmal mit ABC und einmal mit AAA. Was siehst du?'],
+  columnar: ['Spaltentransposition', 'Schreib in Zeilen und lies die Spalten nach dem Schlüsselwort ab.', 'Ab Klasse 8', 'Schreibe die Nachricht zeilenweise unter das Codewort. Sortiere die Spalten nach den Schlüsselbuchstaben. Bei gleichen Buchstaben kommt die linke Spalte zuerst. Lies jede Spalte von oben nach unten. Leer- und Satzzeichen wandern mit.', 'Vergleiche die Codewörter ZEBRA und ZEBRAS. Warum ändert sich die Reihenfolge des Geheimtexts?'],
+  affine: ['Affine Chiffre', 'Multipliziere und verschiebe im Alphabet.', 'Ab Klasse 9', 'Nummeriere A bis Z von 0 bis 25. Für die Zahl x berechnest du a × x + b und nimmst den Rest bei Division durch 26. Faktor a muss zu 26 teilerfremd sein, damit alle Buchstaben eindeutig bleiben.', 'Stelle a = 1 ein und vergleiche die Zuordnung mit Cäsar. Was bewirkt a = 5?'],
+  hill: ['Hill-Chiffre', 'Verschlüssele Buchstabenpaare mit einer Matrix.', 'Ab Klasse 10', 'A zählt als 0, Z als 25. Multipliziere die beiden Zahlen eines Paars mit der Schlüsselmatrix und nimm jeweils den Rest bei Division durch 26. Zum Entschlüsseln wird die Umkehrmatrix verwendet. Leerzeichen und Satzzeichen entfallen. Bei ungerader Länge ergänzt die App ein X. Prüfe nach dem Entschlüsseln, ob das letzte X ein Füllzeichen war.', 'Vergleiche HA und HB. Wie viele Zeichen im Ergebnis ändern sich? Wechsle danach die Schlüsselmatrix.'],
   crack: ['Knack-Labor', 'Probiere alle Cäsar-Schlüssel und finde die lesbare Nachricht.', 'Ab Klasse 7', 'Bei Cäsar gibt es 26 Möglichkeiten einschließlich 0. Die Buchstabenhäufigkeit zeigt, welche Zeichen oft vorkommen. Bei kurzen Texten ist sie nur ein schwacher Hinweis.', 'Setze das Beispiel ein und finde einen lesbaren Satz. Zähle, wie viele Verschiebungen du ausprobiert hast.']
 };
-const drafts = Object.fromEntries(Object.keys(modes).map(key => [key, {text: '', reverse: false, shift: key === 'keyword' ? 0 : 3, word: key === 'keyword' ? 'BANANE' : 'ABC', rows: 3, view: 'strip', step: 0}]));
+const drafts = Object.fromEntries(Object.keys(modes).map(key => [key, {text: '', reverse: false, shift: key === 'keyword' ? 0 : 3, word: key === 'keyword' ? 'BANANE' : key === 'columnar' ? 'ZEBRA' : 'ABC', factor: 5, offset: 8, matrix: 0, rows: 3, view: 'strip', step: 0}]));
 drafts.caesar.text = 'HALLO';
 let mode = 'caesar';
 let drag;
@@ -130,13 +133,21 @@ function showMode(next, focus = false) {
   source.value = state().text;
   const controls = [];
   if (mode !== 'crack') controls.push('<fieldset><legend>Richtung</legend><div class="segment"><button data-direction="encode">Verschlüsseln</button><button data-direction="decode">Entschlüsseln</button></div></fieldset>');
-  if (mode === 'keyword' || mode === 'vigenere') controls.push('<label>Codewort<input id="word" maxlength="36" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></label>');
+  if (mode === 'keyword' || mode === 'vigenere' || mode === 'columnar') controls.push('<label>Codewort<input id="word" maxlength="36" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></label>');
   if (mode === 'caesar' || mode === 'keyword') controls.push('<fieldset><legend>Verschiebung</legend><div class="segment shift"><button data-shift="-1" aria-label="Verschiebung verkleinern">−</button><output id="shift-value"></output><button data-shift="1" aria-label="Verschiebung vergrößern">+</button></div></fieldset>');
   if (mode === 'caesar') controls.push('<fieldset><legend>Ansicht</legend><div class="segment"><button data-view="strip">Streifenalphabet</button><button data-view="wheel">Drehscheibe</button></div></fieldset>');
   if (mode === 'rail') controls.push('<label>Zeilen<select id="rows"><option>2</option><option>3</option><option>4</option><option>5</option></select></label>');
+  const selectControl = (label, id, choices) => '<label>' + label + '<select id="' + id + '">' +
+    choices.map(([value, text]) => '<option value="' + value + '">' + text + '</option>').join('') + '</select></label>';
+  if (mode === 'affine') {
+    controls.push(selectControl('Faktor a', 'factor', units.map(n => [n,n])));
+    controls.push(selectControl('Verschiebung b', 'offset', [...alphabet].map((_,n) => [n,n])));
+  }
+  if (mode === 'hill') controls.push(selectControl('Schlüsselmatrix', 'matrix', matrices.map(([a,b,c,d],i) => [i, a + ' ' + b + ' / ' + c + ' ' + d])));
   $('controls').innerHTML = controls.join('');
   if ($('word')) $('word').value = state().word;
   if ($('rows')) $('rows').value = state().rows;
+  for (const id of ['factor','offset','matrix']) if ($(id)) $(id).value = state()[id];
   if (focus) $('mode-title').focus();
   update();
 }
@@ -151,7 +162,7 @@ function strip(key, active) {
       const classes = [char === activeChar ? 'lit' : '', keywordLetters.includes(char) ? 'keyword-letter' : ''].filter(Boolean);
       return '<span class="' + classes.join(' ') + '">' + char + '</span>';
     }).join('') + '</div></div>';
-  return '<div class="strips" ' + (mode !== 'atbash' ? 'data-drag="true"' : '') + '>' +
+  return '<div class="strips" ' + (['caesar','keyword'].includes(mode) ? 'data-drag="true"' : '') + '>' +
     row('Klaralphabet', alphabet, active) + row('Geheimalphabet', key, key[alphabet.indexOf(active)], highlights) + '</div>';
 }
 function wheel(key, active) {
@@ -232,6 +243,38 @@ function update() {
         symbol(letter) + '</button>').join('') +
         '<button data-token="U+20">Leerzeichen</button><button data-token="back">Letztes Zeichen löschen</button></div>';
     }
+  } else if (mode === 'columnar') {
+    const code = letters(s.word);
+    answer = columnar(s.text, code, s.reverse);
+    const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,72);
+    const order = columnOrder(code);
+    visual = code.length < 2 ? '<p>Das Codewort braucht mindestens zwei Buchstaben.</p>' :
+      '<div class="square-scroll" tabindex="0" aria-label="Spaltentabelle"><table class="cipher-square"><caption>Spalten in Ablesereihenfolge nummeriert</caption><thead><tr>' +
+      [...code].map((char,i) => '<th scope="col">' + char + ' · ' + (order.indexOf(i)+1) + '</th>').join('') +
+      '</tr></thead><tbody>' + Array.from({length:Math.ceil(chars.length/code.length)}, (_,row) => '<tr>' +
+      [...code].map((_,i) => '<td>' + escape((chars[row*code.length+i] || '').replace(' ','·')) + '</td>').join('') + '</tr>').join('') +
+      '</tbody></table></div>';
+  } else if (mode === 'affine') {
+    const key = affineKey(s.factor,s.offset);
+    answer = substitute(s.text,key,s.reverse);
+    visual = '<p><b>Geheimtextzahl = (' + s.factor + ' × Klartextzahl + ' + s.offset + ') mod 26</b></p>' + strip(key);
+  } else if (mode === 'hill') {
+    const matrix = matrices[s.matrix];
+    answer = hill(s.text,matrix,s.reverse);
+    const input = letters(s.text);
+    if (input.length % 2) $('notice').textContent = s.reverse ? 'Der Geheimtext braucht eine gerade Buchstabenzahl.' : 'Ein X wurde als Füllzeichen ergänzt.';
+    else $('notice').textContent = '';
+    $('convention').textContent = 'Hill verwendet nur Buchstaben A–Z. Umlaute werden ausgeschrieben.';
+    const [a,b,c,d] = matrix;
+    const pair = ((!s.reverse ? input : answer) + 'X').slice(0,2);
+    visual = '<p><b>Schlüsselmatrix</b></p><table class="hill-matrix" aria-label="Schlüsselmatrix"><tr><td>' + a +
+      '</td><td>' + b + '</td></tr><tr><td>' + c + '</td><td>' + d + '</td></tr></table>';
+    if (pair.length === 2 && answer) {
+      const [x,y] = [...pair].map(char => alphabet.indexOf(char));
+      visual += '<p>Erstes Klartextpaar <b>' + pair + '</b> → (' + x + ', ' + y + ')</p><p>(' +
+        a + ' × ' + x + ' + ' + b + ' × ' + y + ') mod 26 = ' + mod(a*x+b*y) + ' · (' +
+        c + ' × ' + x + ' + ' + d + ' × ' + y + ') mod 26 = ' + mod(c*x+d*y) + ' → <b>' + hill(pair,matrix) + '</b></p>';
+    }
   } else if (mode === 'rail') {
     answer = rail(s.text, s.rows, s.reverse);
     const chars = Array.from(normalize(s.reverse ? answer : s.text)).slice(0,24);
@@ -267,9 +310,9 @@ document.querySelector('.rack').addEventListener('click', event => {
   if (button) showMode(button.dataset.mode, true);
 });
 bench.addEventListener('input', event => {
-  if (!['word','rows'].includes(event.target.id)) return;
+  if (!['word','rows','factor','offset','matrix'].includes(event.target.id)) return;
   if (event.target.id === 'word') state().word = event.target.value;
-  else state().rows = Number(event.target.value);
+  else state()[event.target.id] = Number(event.target.value);
   update();
 });
 bench.addEventListener('click', async event => {
@@ -299,6 +342,9 @@ bench.addEventListener('click', async event => {
     if (mode === 'crack') s.text = substitute(example, rotate(alphabet, 7));
     else if (!s.reverse) s.text = example;
     else if (symbolMode()) s.text = encodeTokens(example);
+    else if (mode === 'columnar') s.text = columnar(example,s.word);
+    else if (mode === 'affine') s.text = substitute(example,affineKey(s.factor,s.offset));
+    else if (mode === 'hill') s.text = hill(example,matrices[s.matrix]);
     else if (mode === 'rail') s.text = rail(example, s.rows);
     else if (mode === 'vigenere') s.text = vigenere(example, s.word);
     else s.text = substitute(example, mapping());
@@ -335,6 +381,8 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
+
 
 
 
