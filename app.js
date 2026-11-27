@@ -13,7 +13,7 @@ const modes = {
   rail: ['Gartenzaun', 'Verteile deine Nachricht im Zickzack auf mehrere Zeilen.', 'Ab Klasse 7', 'Schreibe die Zeichen im Zickzack hinunter und hinauf. Lies dann jede Zeile von links nach rechts. Leerzeichen wandern dabei mit.', 'Vergleiche zwei und drei Zeilen. Welche Buchstaben behalten ihren Platz?'],
   vigenere: ['Vigenère', 'Jeder Buchstabe deines Schlüsselworts bestimmt eine Verschiebung.', 'Ab Klasse 8', 'A bedeutet Verschiebung 0, B bedeutet 1, Z bedeutet 25. Das Schlüsselwort wiederholt sich. Leer- und Satzzeichen verbrauchen keinen Schlüsselbuchstaben.', 'Verschlüssle AAAAAA einmal mit ABC und einmal mit AAA. Was siehst du?'],
   columnar: ['Spaltentransposition', 'Schreib in Zeilen und lies die Spalten nach dem Schlüsselwort ab.', 'Ab Klasse 8', 'Schreibe die Nachricht zeilenweise unter das Codewort. Sortiere die Spalten nach den Schlüsselbuchstaben. Bei gleichen Buchstaben kommt die linke Spalte zuerst. Lies jede Spalte von oben nach unten. Leer- und Satzzeichen wandern mit.', 'Vergleiche die Codewörter ZEBRA und ZEBRAS. Warum ändert sich die Reihenfolge des Geheimtexts?'],
-  affine: ['Affine Chiffre', 'Multipliziere und verschiebe im Alphabet.', 'Ab Klasse 9', 'Nummeriere A bis Z von 0 bis 25. Für die Zahl x berechnest du a × x + b und nimmst den Rest bei Division durch 26. Faktor a muss zu 26 teilerfremd sein, damit alle Buchstaben eindeutig bleiben.', 'Stelle a = 1 ein und vergleiche die Zuordnung mit Cäsar. Was bewirkt a = 5?'],
+  affine: ['Affine Chiffre', 'Multipliziere und verschiebe im Alphabet.', 'Ab Klasse 9', 'Die affine Chiffre arbeitet Buchstabe für Buchstabe. Du wandelst den Buchstaben in eine Zahl um, multiplizierst sie und addierst anschließend eine feste Zahl.', 'Vergleiche im Experiment a = 5 und a = 2 bei b = 8. Was passiert mit A und N? Probiere danach a = 1. Was erinnert dich an Cäsar?'],
   hill: ['Hill-Chiffre', 'Verschlüssele Buchstabenpaare mit einer Matrix.', 'Ab Klasse 10', 'Bei Hill werden immer zwei Buchstaben gemeinsam verschlüsselt. Die Schlüsselmatrix ist eine kleine Zahlentabelle. Ihre beiden Zeilen sagen dir, wie du die zwei neuen Buchstaben berechnest.', 'Vergleiche HA und HB. Wie viele Zeichen im Ergebnis ändern sich? Wechsle danach die Schlüsselmatrix.'],
   crack: ['Knack-Labor', 'Probiere alle Cäsar-Schlüssel und finde die lesbare Nachricht.', 'Ab Klasse 7', 'Bei Cäsar gibt es 26 Möglichkeiten einschließlich 0. Die Buchstabenhäufigkeit zeigt, welche Zeichen oft vorkommen. Bei kurzen Texten ist sie nur ein schwacher Hinweis.', 'Setze das Beispiel ein und finde einen lesbaren Satz. Zähle, wie viele Verschiebungen du ausprobiert hast.']
 };
@@ -124,6 +124,11 @@ function showMode(next, focus = false) {
   $('explanation').textContent = explanation;
   $('vigenere-square')?.remove();
   $('hill-lesson')?.remove();
+  $('affine-lesson')?.remove();
+  if (mode === 'affine') {
+    $('explanation').insertAdjacentHTML('afterend', affineLesson());
+    updateAffineExperiment();
+  }
   if (mode === 'hill') $('explanation').insertAdjacentHTML('afterend', hillLesson());
   if (mode === 'vigenere') $('explanation').insertAdjacentHTML('afterend', vigenereSquare());
   $('mission').textContent = mission;
@@ -225,6 +230,60 @@ function hillLesson() {
     '<p class="caption">Beim Entschlüsseln verwendet das Labor die Umkehrmatrix. Leer- und Satzzeichen entfallen. ' +
     'Bei ungerader Länge wird ein X ergänzt. Prüfe nach dem Entschlüsseln, ob das letzte X ein Füllzeichen war.</p></section>';
 }
+function affineSteps(letter, factor, offset) {
+  const x = alphabet.indexOf(letter);
+  const product = factor * x;
+  const sum = product + offset;
+  const remainder = mod(sum);
+  return '<ol class="affine-steps"><li><b>' + letter + ' → ' + x + '</b> · Buchstabenwert ablesen</li>' +
+    '<li>Mit Faktor <b class="affine-a">a = ' + factor + '</b> multiplizieren: ' + x + ' × ' + factor + ' = <b>' + product + '</b></li>' +
+    '<li>Verschiebung <b class="affine-b">b = ' + offset + '</b> addieren: ' + product + ' + ' + offset + ' = <b>' + sum + '</b></li>' +
+    '<li>Durch 26 teilen: ' + sum + ' = ' + Math.floor(sum/26) + ' × 26 + <b>' + remainder + '</b>. Der Rest ist ' + remainder + '.</li>' +
+    '<li>Rest im Alphabet nachschlagen: <b>' + remainder + ' → ' + alphabet[remainder] + '</b></li></ol>';
+}
+
+function affineLesson() {
+  const word = 'PAKET';
+  const key = affineKey(5,8);
+  const options = [...alphabet].map((_,i) => '<option' + (i === 2 ? ' selected' : '') + '>' + i + '</option>').join('');
+  return '<section id="affine-lesson"><h3>Beispiel: PAKET verschlüsseln</h3>' +
+    '<h4>1. Buchstaben nummerieren</h4><p>Beginne bei null. A = 0, B = 1 und so weiter bis Z = 25.</p>' +
+    '<div class="hill-alphabet" aria-label="Alphabet mit Buchstabenwerten">' + [...alphabet].map((letter,i) =>
+      '<span' + (word.includes(letter) ? ' class="hill-mark"' : '') + '><b>' + letter + '</b><small>' + i + '</small></span>').join('') + '</div>' +
+    '<h4>2. Schlüssel einstellen</h4><p>Der <b class="affine-a">Faktor a = 5</b> sagt dir, womit du multiplizierst. ' +
+    '<b class="affine-b">Verschiebung b = 8</b> heißt, dass du danach 8 addierst.</p>' +
+    '<h4>3. Einen Buchstaben gemeinsam rechnen</h4><p>Bei P kommst du auf 83. Weil es nur 26 Buchstaben gibt, ' +
+    'behältst du den Rest bei Division durch 26. Das heißt <b>Modulo 26</b>.</p>' + affineSteps('P',5,8) +
+    '<h4>4. Alle Buchstaben umwandeln</h4><div class="square-scroll"><table class="cipher-square"><thead><tr>' +
+    '<th scope="col">Klartext</th><th scope="col">Zahl</th><th scope="col">Rechnung</th><th scope="col">Rest</th><th scope="col">Geheimtext</th>' +
+    '</tr></thead><tbody>' + [...word].map(letter => {
+      const x = alphabet.indexOf(letter);
+      return '<tr><th scope="row">' + letter + '</th><td>' + x + '</td><td>5 × ' + x + ' + 8 = ' +
+        (5*x+8) + '</td><td>' + mod(5*x+8) + '</td><td>' + key[x] + '</td></tr>';
+    }).join('') + '</tbody></table></div><p><b>PAKET → ' + substitute(word,key) + '</b></p>' +
+    '<button type="button" id="affine-example">PAKET mit a = 5 und b = 8 einsetzen</button>' +
+    '<h4>5. Warum sind manche Faktoren ungeeignet?</h4><p>Jeder Buchstabe braucht eine eigene Zuordnung. ' +
+    'Bei a = 2 und b = 8 werden A und N beide zu I. Das Labor bietet deshalb beim normalen Schlüssel nur Faktoren an, ' +
+    'die mit 26 keinen gemeinsamen Teiler außer 1 haben. Hier kannst du auch ungeeignete Faktoren testen.</p>' +
+    '<label for="affine-experiment">Experiment mit b = 8 · Faktor a </label><select id="affine-experiment">' + options +
+    '</select><div id="affine-experiment-result"></div>' +
+    '<h4>6. Verbindung zu Cäsar</h4><p>Bei a = 1 bleibt der Buchstabenwert nach der Multiplikation gleich. ' +
+    'Du addierst nur b. Das ist genau die Cäsar-Verschiebung.</p></section>';
+}
+
+function updateAffineExperiment() {
+  const factor = Number($('affine-experiment').value);
+  const key = affineKey(factor,8);
+  const unique = new Set(key).size;
+  const counts = new Map();
+  for (const letter of key) counts.set(letter,(counts.get(letter) ?? 0)+1);
+  $('affine-experiment-result').innerHTML = '<p><b>' + unique + ' von 26 verschiedenen Zeichen</b> · A → ' + key[0] +
+    ' · N → ' + key[13] + (unique < 26 ? ' · Keine eindeutige Entschlüsselung möglich.' : ' · Eindeutig entschlüsselbar.') +
+    '</p><div class="square-scroll" tabindex="0" aria-label="Klartext und Geheimtext im Experiment"><table class="cipher-square">' +
+    '<tbody><tr><th scope="row">Klartext</th>' + [...alphabet].map(letter => '<td>' + letter + '</td>').join('') +
+    '</tr><tr><th scope="row">Geheimtext</th>' + [...key].map(letter =>
+      '<td' + (counts.get(letter) > 1 ? ' class="affine-repeat"' : '') + '>' + letter + '</td>').join('') + '</tr></tbody></table></div>';
+}
 function frequencies(text) {
   const counts = Object.fromEntries([...alphabet].map(letter => [letter, 0]));
   for (const letter of letters(text)) counts[letter]++;
@@ -299,7 +358,17 @@ function update() {
   } else if (mode === 'affine') {
     const key = affineKey(s.factor,s.offset);
     answer = substitute(s.text,key,s.reverse);
-    visual = '<p><b>Geheimtextzahl = (' + s.factor + ' × Klartextzahl + ' + s.offset + ') mod 26</b></p>' + strip(key);
+    const first = letters(s.text)[0];
+    const active = s.reverse && first ? alphabet[key.indexOf(first)] : first;
+    visual = strip(key,active);
+    if (s.reverse) {
+      visual += '<p>Suche den Geheimtextbuchstaben unten und lies oben den ursprünglichen Buchstaben ab.</p>';
+      if (first) visual += '<p><b>' + first + ' → ' + active + '</b></p>';
+    } else {
+      visual += '<p><b>Geheimtextzahl = (<span class="affine-a">' + s.factor +
+        '</span> × Klartextzahl + <span class="affine-b">' + s.offset + '</span>) mod 26</b></p>';
+      if (first) visual += affineSteps(first,s.factor,s.offset);
+    }
   } else if (mode === 'hill') {
     const matrix = matrices[s.matrix];
     answer = hill(s.text,matrix,s.reverse);
@@ -347,6 +416,7 @@ document.querySelector('.rack').addEventListener('click', event => {
   if (button) showMode(button.dataset.mode, true);
 });
 bench.addEventListener('input', event => {
+  if (event.target.id === 'affine-experiment') { updateAffineExperiment(); return; }
   if (!['word','rows','factor','offset','matrix'].includes(event.target.id)) return;
   if (event.target.id === 'word') state().word = event.target.value;
   else state()[event.target.id] = Number(event.target.value);
@@ -388,6 +458,15 @@ bench.addEventListener('click', async event => {
     else s.text = substitute(example, mapping());
     s.step = 0;
   }
+  if (button.id === 'affine-example') {
+    s.text = 'PAKET';
+    s.factor = 5;
+    s.offset = 8;
+    s.reverse = false;
+    $('factor').value = '5';
+    $('offset').value = '8';
+    source.focus();
+  }
   if (button.id === 'hill-example') {
     s.text = 'AUTO';
     s.matrix = 0;
@@ -426,6 +505,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 

@@ -186,3 +186,10 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 .hill-pair ol { margin:0; padding-left:1.45rem; }
 .hill-pair li + li { margin-top:.35rem; }
 .hill-total { color:#14546b; font-size:1.3rem; margin-top:.65rem; }
+
+#affine-lesson h4 { margin:.85rem 0 .3rem; font-size:1rem; }
+.affine-steps { margin:.35rem 0 .6rem; padding-left:1.6rem; }
+.affine-a { color:#00695e; }
+.affine-b { color:#234cac; }
+.cipher-square td.affine-repeat { background:#f5d9dc; color:#59252e; font-weight:750; }
+#affine-experiment-result p { margin:.45rem 0; }
