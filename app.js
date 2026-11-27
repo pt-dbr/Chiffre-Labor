@@ -119,6 +119,8 @@ function showMode(next, focus = false) {
   $('description').textContent = description;
   $('level').textContent = level;
   $('explanation').textContent = explanation;
+  $('vigenere-square')?.remove();
+  if (mode === 'vigenere') $('explanation').insertAdjacentHTML('afterend', vigenereSquare());
   $('mission').textContent = mission;
   $('notice').textContent = '';
   document.querySelectorAll('[data-mode]').forEach(button => {
@@ -162,6 +164,19 @@ function wheel(key, active) {
     '<circle cx="160" cy="160" r="151"/><circle cx="160" cy="160" r="119"/><circle cx="160" cy="160" r="87"/>' +
     ring(alphabet, 134, active) + ring(key, 102, key[alphabet.indexOf(active)]) +
     '<text class="wheel-key" x="160" y="153">+' + state().shift + '</text><text x="160" y="182">Verschiebung</text></svg></div>';
+}
+function vigenereSquare() {
+  const header = [...alphabet].map(letter => '<th scope="col">' + letter + '</th>').join('');
+  const rows = [...alphabet].map((letter, shift) => '<tr><th scope="row">' + letter + '</th>' +
+    [...rotate(alphabet, shift)].map(cell =>
+      '<td' + (letter === 'C' && cell === 'J' ? ' class="square-example"' : '') + '>' + cell + '</td>').join('') +
+    '</tr>').join('');
+  return '<div id="vigenere-square"><p>Wähle links den <b>Codebuchstaben</b> und oben den <b>Klartextbuchstaben</b>. ' +
+    'Am Schnittpunkt steht der Geheimtextbuchstabe. Beispiel: Codebuchstabe <b>C</b> und Klartext <b>H</b> ergeben <b>J</b>. ' +
+    'Zum Entschlüsseln suche in der Codezeile den Geheimtextbuchstaben und lies oben den Klartext ab.</p>' +
+    '<div class="square-scroll" role="region" tabindex="0" aria-label="Vigenère-Quadrat, seitlich scrollbar">' +
+    '<table class="cipher-square"><caption>Vigenère-Quadrat</caption><thead><tr><th scope="col">Code ↓</th>' +
+    header + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 }
 function frequencies(text) {
   const counts = Object.fromEntries([...alphabet].map(letter => [letter, 0]));
@@ -320,6 +335,7 @@ $('visual').addEventListener('pointermove', event => {
 });
 for (const event of ['pointerup','pointercancel','lostpointercapture']) $('visual').addEventListener(event, () => { drag = undefined; });
 showMode(mode);
+
 
 
 

@@ -154,3 +154,13 @@ footer { padding:1.4rem 0; text-align:center; color:#304651; font-size:.88rem; }
 .cross-only .cross-guide { display:none; }
 .cross-outline { fill:none; stroke:#142837; stroke-width:2.15; stroke-linejoin:round; stroke-linecap:round; }
 .origin-grid figcaption { font-size:.85rem; }
+
+.square-scroll { max-width:100%; overflow:auto; margin-bottom:.75rem; border:1px solid #9cb4c1; border-radius:.45rem; }
+.square-scroll:focus-visible { outline:3px solid #1682a5; outline-offset:2px; }
+.cipher-square { width:100%; border-spacing:0; font-size:.85rem; font-variant-numeric:tabular-nums; }
+.cipher-square caption { padding:.4rem .55rem; text-align:left; font-weight:750; background:#e2edf1; }
+.cipher-square th,.cipher-square td { min-width:1.6rem; padding:.18rem .22rem; text-align:center; border-right:1px solid #afc2cc; border-bottom:1px solid #afc2cc; }
+.cipher-square th { color:white; background:#14546b; }
+.cipher-square th:first-child { position:sticky; left:0; min-width:3.6rem; }
+.cipher-square tr:nth-child(even) td { background:#eaf2f5; }
+.cipher-square .square-example { color:white; background:#14546b; font-weight:850; }
